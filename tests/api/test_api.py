@@ -1,8 +1,6 @@
 import unittest
-
 from fastapi.testclient import TestClient
 from challenge import app
-
 from unittest.mock import patch
 import numpy as np
 
