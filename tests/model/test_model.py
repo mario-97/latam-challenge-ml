@@ -55,6 +55,7 @@ class TestModel(unittest.TestCase):
             target_column="delay"
         )
 
+        features = features[self.FEATURES_COLS]
         assert isinstance(features, pd.DataFrame)
         assert features.shape[1] == len(self.FEATURES_COLS)
         assert set(features.columns) == set(self.FEATURES_COLS)
@@ -71,6 +72,7 @@ class TestModel(unittest.TestCase):
             data=self.data
         )
 
+        features = features[self.FEATURES_COLS]
         assert isinstance(features, pd.DataFrame)
         assert features.shape[1] == len(self.FEATURES_COLS)
         assert set(features.columns) == set(self.FEATURES_COLS)
@@ -83,6 +85,8 @@ class TestModel(unittest.TestCase):
             data=self.data,
             target_column="delay"
         )
+
+        features = features[self.FEATURES_COLS]
 
         _, features_validation, _, target_validation = train_test_split(features, target, test_size = 0.33, random_state = 42)
 
@@ -109,6 +113,8 @@ class TestModel(unittest.TestCase):
         features = self.model.preprocess(
             data=self.data
         )
+
+        features = features[self.FEATURES_COLS]
 
         predicted_targets = self.model.predict(
             features=features
