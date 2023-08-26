@@ -112,8 +112,6 @@ class TestModel(unittest.TestCase):
             data=self.data
         )
 
-        features = features[self.FEATURES_COLS]
-
         predicted_targets = self.model.predict(
             features=features
         )
