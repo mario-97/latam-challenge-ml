@@ -14,6 +14,10 @@ Para corregir esto, se debe ajustar la definición de tipos en el método 'prepr
 
 2.- Error en la función "Barplot": En este caso, se esta entregando de manera incorrecta los parametros a la funcion, si bien, se sabe que el primer elemento corresponde a los datos del eje X, y el segundo al eje Y, estos deben quedar declarados explicitamente con sus nombres de la siguiente manera: Ejemplo, "sns.barplot(x=flights_by_airline.index, y=flights_by_airline.values, alpha=0.9)"
 
+3.- Actualización y librerías faltantes en requeriments.txt
+
+4.- Corrección en test_model.py, ajuste de columna inexistente, ajusta de ruta del archivo data.csv
+
 # Pasos de transcripción del archivo .ipynb a .py
 
 1.- Ordenar imports al comienzo del código
