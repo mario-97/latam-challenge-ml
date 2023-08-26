@@ -32,7 +32,7 @@ async def post_predict(flights: dict) -> dict:
 
     if unknown_columns:
         unknown_column_names = ", ".join(unknown_columns)
-        raise fastapi.HTTPException(status_code=400, detail=f"Unknown columns found: {unknown_column_names}")
+        raise fastapi.HTTPException(status_code=400, detail=f"Unknown columns found")
     return {
         "predict": [0]
     }

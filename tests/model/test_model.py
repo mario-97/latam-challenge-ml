@@ -72,7 +72,6 @@ class TestModel(unittest.TestCase):
             data=self.data
         )
 
-        features = features[self.FEATURES_COLS]
         assert isinstance(features, pd.DataFrame)
         assert features.shape[1] == len(self.FEATURES_COLS)
         assert set(features.columns) == set(self.FEATURES_COLS)
