@@ -18,55 +18,47 @@ from typing import Tuple, Union, List
 
 class DelayModel:
 
-    def __init__(
-        self
-    ):
-        self._model = None # Model should be saved in this attribute.
+    def __init__(self, model):
+        self._model = model  # Model should be saved in this attribute.
 
-    def preprocess(
-        self,
-        data: pd.DataFrame,
-        target_column: str = None
-    ) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
+    def preprocess(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Prepare raw data for training or predict.
+        Prepare raw data for prediction.
 
         Args:
             data (pd.DataFrame): raw data.
-            target_column (str, optional): if set, the target is returned.
 
         Returns:
-            Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
-                - If target_column is provided, returns a tuple of features and target.
-                - Otherwise, returns only features.
+            pd.DataFrame: preprocessed data.
         """
         # Your preprocessing logic here
-        if target_column is not None:
-            features = data.drop(columns=[target_column])
-            target = data[target_column]
-            return features, target
-        else:
-            return data
+        data['period_day'] = data['Fecha-I'].apply(get_period_day)
+        data['high_season'] = data['Fecha-I'].apply(is_high_season)
+        data['min_diff'] = data.apply(get_min_diff, axis=1)
 
-    def fit(
-        self,
-        features: pd.DataFrame,
-        target: pd.DataFrame
-    ) -> None:
+        features = pd.concat([
+            pd.get_dummies(data['OPERA'], prefix='OPERA'),
+            pd.get_dummies(data['TIPOVUELO'], prefix='TIPOVUELO'),
+            pd.get_dummies(data['MES'], prefix='MES')], 
+            axis=1
+        )
+        return features
+
+    def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
         """
         Fit model with preprocessed data.
 
         Args:
             features (pd.DataFrame): preprocessed data.
-            target (pd.DataFrame): target.
+            target (pd.Series): target.
+
+        Returns:
+            None
         """
         # Your fitting logic here
-        return
+        self._model.fit(features, target)
 
-    def predict(
-        self,
-        features: pd.DataFrame
-    ) -> List[int]:
+    def predict(self, features: pd.DataFrame) -> List[int]:
         """
         Predict delays for new flights.
 
@@ -77,7 +69,9 @@ class DelayModel:
             List[int]: predicted targets.
         """
         # Your prediction logic here
-        return []
+        predictions = self._model.predict(features)
+        return predictions
+
     
 def get_period_day(date):
     date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
