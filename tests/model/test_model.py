@@ -32,7 +32,19 @@ class TestModel(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.model = DelayModel()
-        self.data = pd.read_csv("../../data/data.csv")
+
+        import os
+
+        # Obtiene la ruta del directorio de trabajo en GitHub Actions
+        github_workspace = os.environ['GITHUB_WORKSPACE']
+
+        # Construye la ruta al archivo data.csv
+        data_file_path = os.path.join(github_workspace, 'data', 'data.csv')
+
+        # Lee el archivo CSV
+        self.data = pd.read_csv(filepath_or_buffer=data_file_path)
+
+        #self.data = pd.read_csv(filepath_or_buffer="../../data/data.csv")
         
 
     def test_model_preprocess_for_training(
