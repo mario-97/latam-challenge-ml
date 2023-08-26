@@ -86,8 +86,6 @@ class TestModel(unittest.TestCase):
             target_column="delay"
         )
 
-        features = features[self.FEATURES_COLS]
-
         _, features_validation, _, target_validation = train_test_split(features, target, test_size = 0.33, random_state = 42)
 
         self.model.fit(

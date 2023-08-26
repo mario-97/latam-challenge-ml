@@ -1,6 +1,8 @@
 import unittest
+
 from fastapi.testclient import TestClient
 from challenge import app
+
 from unittest.mock import patch
 import numpy as np
 
@@ -47,8 +49,8 @@ class TestBatchPipeline(unittest.TestCase):
 
             response = self.client.post("/predict", json=data)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"predict": [0]})
+        self.assertEqual(response.status_code, 400)  # Cambia el código de respuesta esperado
+        self.assertEqual(response.json(), {"detail": "Unknown column found"})  # Cambia el resultado esperado
 
     def test_should_failed_unkown_column_2(self):
         data = {        
@@ -65,8 +67,8 @@ class TestBatchPipeline(unittest.TestCase):
 
             response = self.client.post("/predict", json=data)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"predict": [0]})
+        self.assertEqual(response.status_code, 400)  # Cambia el código de respuesta esperado
+        self.assertEqual(response.json(), {"detail": "Unknown column found"})  # Cambia el resultado esperado
     
     def test_should_failed_unkown_column_3(self):
         data = {        
@@ -83,6 +85,5 @@ class TestBatchPipeline(unittest.TestCase):
 
             response = self.client.post("/predict", json=data)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"predict": [0]})
-
+        self.assertEqual(response.status_code, 400)  # Cambia el código de respuesta esperado
+        self.assertEqual(response.json(), {"detail": "Unknown column found"})  # Cambia el resultado esperado
