@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import roc_curve, roc_auc_score, confusion_matrix, classification_report, matthews_corrcoef
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from xgboost import plot_importance
