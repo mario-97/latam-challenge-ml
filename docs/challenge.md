@@ -56,10 +56,19 @@ Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un
         | macro avg      | 0.57      | 0.61   | 0.52     | 22508   |
         | weighted avg   | 0.77      | 0.56   | 0.61     | 22508   |
 
-        - Nota 1: Es destacable la alta tasa de Accuracy y Precisión tanto para las clases positivas como negativas encontradas en los modelos XGBoost, Logistic Regression y Random Forest al no aplicar el balance ni tomar las características más importantes.
-        - Nota 2: Tanto "LR with Feature Import. and with Balance", como "RF with Feature Import. and with Balance", tienen una alta tasa en la curva ROC y AUC (0.6 ambos casos), esto quiere decir que estos modelos también son capaces de distinguir de buena manera clases positivas y negativas
+        Con el objetivo de seguir potenciando este modelo, se aplica una validación cruzada para mejorar sus entrenamiento:
 
+        **Validacion cruzada: XGBoost with Feature Importance but with Balance**
 
+        |            | precision | recall | f1-score | support |
+        |------------|-----------|--------|----------|---------|
+        | 0          | 0.88      | 0.52   | 0.66     | 37298   |
+        | 1          | 0.24      | 0.67   | 0.36     | 8400    |
+        | accuracy   |           | 0.55   |          | 45698   |
+        | macro avg  | 0.56      | 0.60   | 0.51     | 45698   |
+        | weighted avg | 0.76    | 0.55   | 0.60     | 45698   |
+
+        Por sopresa, el modelo no tuvo ninguna mejora en la predicción de datos, las posibles causas es que el modelo ya esté bien ajustado y que tiene los hiperparámetros adecuados.
 
 
 # Table of Metrics:
@@ -74,4 +83,7 @@ Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un
 | LR with Feature Importance and without Balance  | 0.505095  | 0.059186  | 0.813044  | 0.529412  | 0.012814  | 0.025023  |
 | RF with Feature Import. and with Balance        | **0.606256**  | **0.165823**  | 0.559312  | 0.250808  | **0.681300**  | **0.366643**  |
 | RF with Feature Import. and without Balance     | 0.503232  | 0.058420  | 0.813577  | **0.714286**  | 0.007119  | 0.014098  |
+
+- Nota 1: Es destacable la alta tasa de Accuracy y Precisión tanto para las clases positivas como negativas encontradas en los modelos XGBoost, Logistic Regression y Random Forest al no aplicar el balance ni tomar las características más importantes.
+- Nota 2: Tanto "LR with Feature Import. and with Balance", como "RF with Feature Import. and with Balance", tienen una alta tasa en la curva ROC y AUC (0.6 ambos casos), esto quiere decir que estos modelos también son capaces de distinguir de buena manera clases positivas y negativas
 
