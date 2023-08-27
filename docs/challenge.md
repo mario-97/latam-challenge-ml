@@ -1,4 +1,4 @@
-# Resumen y entendimiento de los datos
+# Descripción breve del problema
 
 Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un Científico de Datos (en adelante, DS). El DS entrenó un modelo para predecir la probabilidad de retraso para un vuelo que despega o aterriza en el aeropuerto SCL. 
 
