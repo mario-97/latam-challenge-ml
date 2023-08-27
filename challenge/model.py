@@ -6,7 +6,7 @@ import warnings
 from typing import Tuple, Union, List
 from datetime import datetime
 from datetime import datetime
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_predict, KFold
 from sklearn.utils import shuffle
 from sklearn.metrics import roc_curve, roc_auc_score, confusion_matrix, classification_report, matthews_corrcoef
 from sklearn.preprocessing import StandardScaler
@@ -14,8 +14,7 @@ import xgboost as xgb
 from xgboost import plot_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from IPython.display import display
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder  
 
 warnings.filterwarnings('ignore') 
 
@@ -388,6 +387,16 @@ def preprocess_normalize_labelencoder(data):
     data = normalize_features(data)
     return data
 
+def cross_val_and_report(model, x, y, num_folds=5):
+    kf = KFold(n_splits=num_folds, shuffle=True, random_state=42)
+    y_preds = cross_val_predict(model, x, y, cv=kf)
+    
+    print("Confusion Matrix:")
+    print(confusion_matrix(y, y_preds))
+    
+    print("Classification Report:")
+    print(classification_report(y, y_preds))
+
 if __name__ == "__main__":
     # Cargar datos
     data = pd.read_csv('../data/data.csv')
@@ -493,6 +502,10 @@ if __name__ == "__main__":
     confusion_matrix(y_test2, xgboost_y_preds_2)
     print(classification_report(y_test2, xgboost_y_preds_2))
 
+    #Aplicacion de validación cruzada para "XGBoost with Feature Importance but without Balance"
+    print("=============Validacion cruzada XGBoost with Feature Importance but without Balance=============")
+    cross_val_and_report(xgb_model_2, x_train2, y_train2, num_folds=10)
+
     #### 6.b.ii. XGBoost with Feature Importance but without Balance
     print("========================XGBoost with Feature Importance and without Balance========================")
     print("Entrenamiento")
@@ -592,10 +605,8 @@ if __name__ == "__main__":
 
     results_df = pd.DataFrame(results, columns=["Model", "ROC AUC", "MCC", "Accuracy", "Precision", "Recall", "F1-Score"])
     print("\nTable of Metrics:")
-    plt.tight_layout()
+    print(results_df) 
     plt.show()
-
-
 
     ## 7. Data Science Conclusions
     # AÑADIR MIS CONCLUSIONES EN CHALLENGE.MD
