@@ -92,10 +92,11 @@ class TestModel(unittest.TestCase):
         assert report["1"]["f1-score"] > 0.30 """
 
     def test_model_predict(self):
-        features, target = self.model.preprocess(data=self.data)
-        features = features[self.FEATURES_COLS]
+        #features = self.model.preprocess(data=self.data)
+        #features = features[self.FEATURES_COLS]
+        features = self.data
         
-        self.model.fit(features=features, target=target)
+        #self.model.fit(features=features, target=target)
         predicted_targets = self.model.predict(features=features)
 
         self.assertIsInstance(predicted_targets, list)
