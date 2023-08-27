@@ -85,8 +85,9 @@ class TestModel(unittest.TestCase):
 
 
     def test_model_predict(self):
-        features, _ = self.model.preprocess(data=self.data)
+        features, target = self.model.preprocess(data=self.data)
 
+        self.model.fit(features=features,target=target)
         predicted_targets = self.model.predict(features=features)
 
         assert isinstance(predicted_targets, list)

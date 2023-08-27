@@ -319,6 +319,7 @@ def preprocess_encode(data):
         )
         
         target = shuffled_data['delay']
+        return features, target
     else:
         # Aleatorizar las filas de las columnas seleccionadas
         shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM']], random_state=111)
@@ -330,10 +331,11 @@ def preprocess_encode(data):
             pd.get_dummies(data['MES'], prefix='MES')], 
             axis=1
         )
-        
-        target = None
+         
+        return features
 
-    return features, target
+
+    
 
 def preprocess_importance_balance(xgb_model, y_train):
     ### Feature Importance
