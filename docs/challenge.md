@@ -4,7 +4,7 @@ Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un
 
 - Un vuelo con mas de 15 min de atraso se considera "Atrasado" (delay = 1), sino, este será etiquetado como no atrasado (delay = 0)
 
-# Correción de errores preliminar (antes de mi desarrollo) 
+# Correción de errores preliminar
 
 1.- Error en clase Delay: Completar funciones para realizar los test y verificar datos
 
@@ -12,20 +12,20 @@ Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un
 
 3.- Actualización y librerías faltantes en requeriments.txt
 
-4.- Corrección en test_model.py: Carga de archivo csv, y ajuste de Entrenamiento y predicciones 
+4.- Corrección en test_model.py: Carga de archivo data.csv, y ajuste de Entrenamiento y predicciones 
 
 # Desarrollo de preprocesamiento, aplicación de modelos, análisis y conclusiones
 
 1. **Ordenar imports al comienzo del código**
 2. **Ordenar funciones al comienzo del código**
-3. **Definir metodología KDD:**
+3. **Metodología KDD:**
     1. **Selección de datos:** Se utilizaron datos públicos y reales sobre vuelos comerciales de LATAM.
     2. **Preprocesamiento:** Se aplicaron los siguientes preprocesamientos:
         - Codificación de características categóricas mediante one-hot encoding, específicamente a las columnas OPERA, TIPOVUELO y MES.
-        - Selección de características importantes con XGBoost.
-        - Balance de clases.
-        - Normalización de características con StandardScaler.
-        - Nueva codificación de características categóricas, esta vez a todas las columnas presentes, utilizando el método de LabelEncoder.
+        - Selección de características importantes con XGBoost: Esto reduce la dimensionalidad de los datos y se enfoca en las características que más influyen en la predicción, mejorando así la eficiencia del modelo y evitando posibles efectos negativos del ruido en datos menos importantes.
+        - Balance de clases: Esto implica aumentar o disminuir la cantidad de instancias en cada clase, lo que ayuda a que el modelo no esté sesgado hacia la clase mayoritaria y logre un rendimiento más equilibrado.
+        - Normalización de características con StandardScaler: Este proceso ajusta las características para que tengan una media de cero y una desviación estándar de uno, lo que ayuda a que las características estén en la misma escala y evita que algunas características dominen otras en la predicción
+        - Nueva codificación de características categóricas, esta vez a todas las columnas presentes, utilizando el método de LabelEncoder: Aunque esto se hizo previamente en un subconjunto de columnas, esta vez se aplicó a todas las columnas categóricas restantes. Esto permite que todas las características categóricas se representen numéricamente de manera coherente en todo el conjunto de datos
     3. **Transformación:** No aplicada.
     4. **Aplicación de modelos:** Se utilizaron los siguientes modelos:
         - XGBoost
@@ -85,5 +85,17 @@ Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un
 | RF with Feature Import. and without Balance     | 0.503232  | 0.058420  | 0.813577  | **0.714286**  | 0.007119  | 0.014098  |
 
 - Nota 1: Es destacable la alta tasa de Accuracy y Precisión tanto para las clases positivas como negativas encontradas en los modelos XGBoost, Logistic Regression y Random Forest al no aplicar el balance ni tomar las características más importantes.
-- Nota 2: Tanto "LR with Feature Import. and with Balance", como "RF with Feature Import. and with Balance", tienen una alta tasa en la curva ROC y AUC (0.6 ambos casos), esto quiere decir que estos modelos también son capaces de distinguir de buena manera clases positivas y negativas
+
+## Conclusiones generales
+
+- Al observar los resultados de los 9 modelos entrenados, se puede concluir que:
+    - No hay diferencias notables en los resultados entre XGBoost, LogisticRegression y Random Forest.
+    - No disminuye el rendimiento del modelo reduciendo las características a las 10 más importantes.
+    - Mejora el rendimiento de los modelos al equilibrar clases, ya que aumenta la recuperación de la clase "1".
+    - No disminuye le rendimiento de los modelos aplicando Normalización de características.
+    - El modelo XGBoost no mejoró su rendimiento aplicando un Validación cruzada
+    - Tanto "LR with Feature Import. and with Balance", como "RF with Feature Import. and with Balance", tienen una alta tasa en la curva ROC y AUC (0.6 ambos casos), esto quiere decir que estos modelos también son capaces de distinguir de buena manera clases positivas y negativas
+
+**Con esto, el modelo para que sea productivo debe ser aquel que esté entrenado con las 10 características principales y balanceo de clases, pero ¿cuál?** 
+- Finalmente el modelo para que sea productivo debe tomar las 10 caracteristicas principales, aplicar normalización y balanceo de clases. Esto lo cumple tanto el modelo XGBoost y Random Forest
 
