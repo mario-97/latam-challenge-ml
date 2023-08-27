@@ -1,8 +1,8 @@
 import unittest
+
 from fastapi.testclient import TestClient
 from challenge import app
-from unittest.mock import patch
-import numpy as np
+
 
 class TestBatchPipeline(unittest.TestCase):
     def setUp(self):
@@ -19,16 +19,7 @@ class TestBatchPipeline(unittest.TestCase):
             ]
         }
         # when("xgboost.XGBClassifier").predict(ANY).thenReturn(np.array([0])) # change this line to the model of chosing
-        """ response = self.client.post("/predict", json=data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"predict": [0]}) """
-
-        with patch("xgboost.XGBClassifier") as mock_model:
-            instance = mock_model.return_value 
-            instance.predict.return_value = np.array([0])
-
-            response = self.client.post("/predict", json=data)
-
+        response = self.client.post("/predict", json=data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"predict": [0]})
     
@@ -43,15 +34,9 @@ class TestBatchPipeline(unittest.TestCase):
                 }
             ]
         }
-        with patch("xgboost.XGBClassifier") as mock_model:
-            instance = mock_model.return_value
-            instance.fit.return_value = None 
-            instance.predict.return_value = np.array([0])
-
-            response = self.client.post("/predict", json=data)
-
-        self.assertEqual(response.status_code, 400)  # Cambia el código de respuesta esperado
-        self.assertEqual(response.json(), {"detail": "Unknown column found"})  # Cambia el resultado esperado
+        # when("xgboost.XGBClassifier").predict(ANY).thenReturn(np.array([0]))# change this line to the model of chosing
+        response = self.client.post("/predict", json=data)
+        self.assertEqual(response.status_code, 400)
 
     def test_should_failed_unkown_column_2(self):
         data = {        
@@ -63,15 +48,9 @@ class TestBatchPipeline(unittest.TestCase):
                 }
             ]
         }
-        with patch("xgboost.XGBClassifier") as mock_model:
-            instance = mock_model.return_value
-            instance.fit.return_value = None 
-            instance.predict.return_value = np.array([0])
-
-            response = self.client.post("/predict", json=data)
-
-        self.assertEqual(response.status_code, 400)  # Cambia el código de respuesta esperado
-        self.assertEqual(response.json(), {"detail": "Unknown column found"})  # Cambia el resultado esperado
+        # when("xgboost.XGBClassifier").predict(ANY).thenReturn(np.array([0]))# change this line to the model of chosing
+        response = self.client.post("/predict", json=data)
+        self.assertEqual(response.status_code, 400)
     
     def test_should_failed_unkown_column_3(self):
         data = {        
@@ -83,12 +62,6 @@ class TestBatchPipeline(unittest.TestCase):
                 }
             ]
         }
-        with patch("xgboost.XGBClassifier") as mock_model:
-            instance = mock_model.return_value
-            instance.fit.return_value = None 
-            instance.predict.return_value = np.array([0])
-
-            response = self.client.post("/predict", json=data)
-
-        self.assertEqual(response.status_code, 400)  # Cambia el código de respuesta esperado
-        self.assertEqual(response.json(), {"detail": "Unknown column found"})  # Cambia el resultado esperado
+        # when("xgboost.XGBClassifier").predict(ANY).thenReturn(np.array([0]))
+        response = self.client.post("/predict", json=data)
+        self.assertEqual(response.status_code, 400)

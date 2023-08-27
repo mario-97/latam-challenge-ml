@@ -32,18 +32,18 @@ class DelayModel:
             pd.DataFrame: preprocessed data.
         """ 
         # Your preprocessing logic here
-        """ if target_column is not None:
+        if target_column is not None:
             features, target = preprocess_encode(data)
             return features, target
         else:
             features, target = preprocess_encode(data)
-            return features """
-        if target_column is not None:
+            return features
+        """ if target_column is not None:
             features = data.drop(columns=[target_column])
             target = data[target_column]
             return features, target
         else:
-            return data
+            return data """
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
         """
