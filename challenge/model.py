@@ -31,13 +31,25 @@ class DelayModel:
         Returns:
             pd.DataFrame: preprocessed data.
         """ 
+        top_10_features = [
+            "OPERA_Latin American Wings", 
+            "MES_7",
+            "MES_10",
+            "OPERA_Grupo LATAM",
+            "MES_12",
+            "TIPOVUELO_I",
+            "MES_4",
+            "MES_11",
+            "OPERA_Sky Airline",
+            "OPERA_Copa Air"
+        ]
         # Your preprocessing logic here
         if target_column is not None:
             features, target = preprocess_encode(data)
-            return features, target
+            return features[top_10_features], target
         else:
             features, target = preprocess_encode(data)
-            return features
+            return features[top_10_features]
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
         """
