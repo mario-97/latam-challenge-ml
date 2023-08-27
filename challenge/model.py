@@ -47,7 +47,7 @@ class DelayModel:
             None
         """
         # Your fitting logic here 
-        self._model.fit(features, target)
+        return self._model.fit(features, target)
 
     def predict(self, features: pd.DataFrame) -> List[int]:
         """
@@ -60,7 +60,7 @@ class DelayModel:
             List[int]: predicted targets.
         """
         # Your prediction logic here
-        self._model.predict(features) 
+        return self._model.predict(features) 
 
     
 def get_period_day(date):
