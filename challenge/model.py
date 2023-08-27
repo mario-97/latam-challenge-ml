@@ -9,64 +9,57 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from xgboost import plot_importance
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 
 warnings.filterwarnings('ignore')
 from typing import Tuple, Union, List
 
 class DelayModel:
 
-    def __init__(
-        self
-    ):
-        self._model = None # Model should be saved in this attribute.
+    def __init__(self, model):
+        self._model = model  # Model should be saved in this attribute.
 
-    def preprocess(
-        self,
-        data: pd.DataFrame,
-        target_column: str = None
-    ) -> Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
+    def generation_feature(self, data: pd.DataFrame) -> pd.DataFrame:
+        return feature_generation(data)
+
+    def preprocess(self, data: pd.DataFrame, target_column: str = None) -> pd.DataFrame:
         """
-        Prepare raw data for training or predict.
+        Prepare raw data for prediction.
 
         Args:
             data (pd.DataFrame): raw data.
-            target_column (str, optional): if set, the target is returned.
 
         Returns:
-            Union[Tuple[pd.DataFrame, pd.DataFrame], pd.DataFrame]:
-                - If target_column is provided, returns a tuple of features and target.
-                - Otherwise, returns only features.
-        """
+            pd.DataFrame: preprocessed data.
+        """ 
         # Your preprocessing logic here
         if target_column is not None:
-            features = data.drop(columns=[target_column])
-            target = data[target_column]
+            features, target = preprocess_encode(data)
             return features, target
         else:
-            return data
+            features, target = preprocess_encode(data)
+            return features
 
-    def fit(
-        self,
-        features: pd.DataFrame,
-        target: pd.DataFrame
-    ) -> None:
+    def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
         """
         Fit model with preprocessed data.
 
         Args:
             features (pd.DataFrame): preprocessed data.
-            target (pd.DataFrame): target.
-        """
-        # Your fitting logic here
-        return
+            target (pd.Series): target.
 
-    def predict(
-        self,
-        features: pd.DataFrame
-    ) -> List[int]:
+        Returns:
+            None
+        """
+        # Your fitting logic here 
+        self._model.fit(features, target)
+
+    def predict(self, features: pd.DataFrame) -> List[int]:
         """
         Predict delays for new flights.
 
@@ -75,9 +68,12 @@ class DelayModel:
 
         Returns:
             List[int]: predicted targets.
-        """
+        """ 
         # Your prediction logic here
-        return []
+        prediction_result = self._model.predict(features)
+        predicted_targets = prediction_result.tolist()  # Convert the array to a Python list
+        return predicted_targets
+
     
 def get_period_day(date):
     date_time = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').time()
@@ -145,15 +141,7 @@ def get_rate_from_column(data, column):
             
     return pd.DataFrame.from_dict(data = rates, orient = 'index', columns = ['Tasa (%)'])
     
-
-if __name__ == "__main__":
-    # Cargar datos
-    data = pd.read_csv('../data/data.csv')
-    data.info()
-
-    ## 1. Data Analysis: Primer vistazo
-    ### ¿Cómo se distribuyen los datos?
-
+def data_analysis(data):
     flights_by_airline = data['OPERA'].value_counts()
     plt.figure(figsize = (10, 2))
     sns.set(style="darkgrid")
@@ -232,26 +220,20 @@ if __name__ == "__main__":
 
     plt.show()
 
-    ## 2. Features Generation
+def feature_generation(data):
     ### 2.a. Period of Day
-        
     data['period_day'] = data['Fecha-I'].apply(get_period_day)
-
     ### 2.b. High Season
     data['high_season'] = data['Fecha-I'].apply(is_high_season)
-
     ### 2.c. Difference in Minutes
     data['min_diff'] = data.apply(get_min_diff, axis = 1)
-
     ### 2.d. Delay
     threshold_in_minutes = 15
     data['delay'] = np.where(data['min_diff'] > threshold_in_minutes, 1, 0)
-    data.columns
+     
+    return data
 
-    ## 3. Data Analysis: Segundo vistazo
-    ### ¿Cómo es la tasa de retraso entre columnas?
-
-
+def rate_delay(data):
     destination_rate = get_rate_from_column(data, 'SIGLADES')
     destination_rate_values = data['SIGLADES'].value_counts().index
     plt.figure(figsize = (20,5))
@@ -332,48 +314,136 @@ if __name__ == "__main__":
     plt.ylabel('Delay Rate [%]', fontsize=12)
     plt.xlabel('Period', fontsize=12)
     plt.ylim(3,7)
-    plt.show()
+    plt.show()  
+
+def preprocess_encode(data):
+    # Verificar si 'delay' está en las columnas
+    if 'delay' in data.columns:
+        # Aleatorizar las filas de las columnas seleccionadas
+        #shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state=111)
+        
+        # Codificación de columnas con one-hot encoding
+        features = pd.concat([
+            pd.get_dummies(data['OPERA'], prefix='OPERA'),
+            pd.get_dummies(data['TIPOVUELO'], prefix='TIPOVUELO'), 
+            pd.get_dummies(data['MES'], prefix='MES')], 
+            axis=1
+        )
+        
+        target = data['delay']
+        return features, target
+    else:
+        # Aleatorizar las filas de las columnas seleccionadas
+        #shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM']], random_state=111)
+
+        # Codificación de columnas con one-hot encoding
+        features = pd.concat([
+            pd.get_dummies(data['OPERA'], prefix='OPERA'),
+            pd.get_dummies(data['TIPOVUELO'], prefix='TIPOVUELO'), 
+            pd.get_dummies(data['MES'], prefix='MES')], 
+            axis=1
+        )
+         
+        return features, None
+    
+def preprocess_importance_balance(xgb_model, y_train):
+    ### Feature Importance
+    plt.figure(figsize = (10,5))
+    plot_importance(xgb_model)
+
+    ### Data Balance
+    n_y0 = len(y_train[y_train == 0])
+    n_y1 = len(y_train[y_train == 1])
+    scale = n_y0/n_y1
+    return scale, n_y0, n_y1
+
+def normalize_features(data):
+    scaler = StandardScaler()
+    return scaler.fit_transform(data)
+
+if __name__ == "__main__":
+    # Cargar datos
+    data = pd.read_csv('../data/data.csv')
+    data.info()
+
+    ## 1. Data Analysis: Primer vistazo
+    ### ¿Cómo se distribuyen los datos?
+    
+    #data_analysis(data)
+
+    ## 2. Features Generation
+    data = feature_generation(data)
+
+    ## 3. Data Analysis: Segundo vistazo
+    ### ¿Cómo es la tasa de retraso entre columnas?
+    
+    #rate_delay(data)
 
     ## 4. Training
     ### 4.a. Data Split (Training and Validation)
-    training_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state = 111)
 
-    features = pd.concat([
-        pd.get_dummies(data['OPERA'], prefix = 'OPERA'),
-        pd.get_dummies(data['TIPOVUELO'], prefix = 'TIPOVUELO'), 
-        pd.get_dummies(data['MES'], prefix = 'MES')], 
-        axis = 1
-    )
-    target = data['delay']
+    # Preprocesamiento
+    features, target = preprocess_encode(data)
+    print(features)
+    print(target)
 
     x_train, x_test, y_train, y_test = train_test_split(features, target, test_size = 0.33, random_state = 42)
+
     print(f"train shape: {x_train.shape} | test shape: {x_test.shape}")
-    y_train.value_counts('%')*100
-    y_test.value_counts('%')*100
+    print(y_train.value_counts('%')*100)
+    print(y_test.value_counts('%')*100)
 
     ### 4.b. Model Selection
     #### 4.b.i. XGBoost
 
+    print("========================XGBoost========================")
+    print("Entrenamiento")
     xgb_model = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
     xgb_model.fit(x_train, y_train)
-
+    print("Prediccion")
     xgboost_y_preds = xgb_model.predict(x_test)
+    print(xgboost_y_preds)
     xgboost_y_preds = [1 if y_pred > 0.5 else 0 for y_pred in xgboost_y_preds]
-
+    print("Reporte")
     confusion_matrix(y_test, xgboost_y_preds)
     print(classification_report(y_test, xgboost_y_preds))
 
     #### 4.b.ii. Logistic Regression
+    print("========================LogisticRegression========================")
+    print("Entrenamiento")
     reg_model = LogisticRegression()
     reg_model.fit(x_train, y_train)
+    print("Prediccion")
     reg_y_preds = reg_model.predict(x_test)
+    print("Reporte")
     confusion_matrix(y_test, reg_y_preds)
     print(classification_report(y_test, reg_y_preds))
 
+    #### 4.c.ii. Random Forest
+    print("========================RandomForestClassifier========================")
+    print("Entrenamiento")
+    rf_model_0 = RandomForestClassifier()
+    rf_model_0.fit(x_train, y_train)
+    print("Prediccion")
+    reg_y_preds_0 = rf_model_0.predict(x_test)
+    print("Reporte")
+    confusion_matrix(y_test, reg_y_preds_0)
+    print(classification_report(y_test, reg_y_preds_0))
+
+    #### 4.d.ii. Support Vector Machine
+    print("========================SVM========================")
+    print("Entrenamiento")
+    svm_model_0 = SVC(kernel='linear')
+    svm_model_0.fit(x_train, y_train)
+    print("Prediccion")
+    svm_reg_y_preds = svm_model_0.predict(x_test)
+    print("Reporte")
+    confusion_matrix(y_test, svm_reg_y_preds)
+    print(classification_report(y_test, svm_reg_y_preds))
+
     ## 5. Data Analysis: Tercer vistazo
-    ### Feature Importance
-    plt.figure(figsize = (10,5))
-    plot_importance(xgb_model)
+    scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
+
     top_10_features = [
         "OPERA_Latin American Wings", 
         "MES_7",
@@ -387,49 +457,99 @@ if __name__ == "__main__":
         "OPERA_Copa Air"
     ]
 
-    ### Data Balance
-    n_y0 = len(y_train[y_train == 0])
-    n_y1 = len(y_train[y_train == 1])
-    scale = n_y0/n_y1
-    print(scale)
-
     ## 6. Training with Improvement
     ### 6.a. Data Split
     x_train2, x_test2, y_train2, y_test2 = train_test_split(features[top_10_features], target, test_size = 0.33, random_state = 42)
 
     ### 6.b. Model Selection
     #### 6.b.i. XGBoost with Feature Importance and with Balance
+    print("========================XGBoost with Feature Importance and with Balance========================")
+    print("Entrenamiento")
     xgb_model_2 = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
     xgb_model_2.fit(x_train2, y_train2)
-
+    print("Prediccion")
     xgboost_y_preds_2 = xgb_model_2.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, xgboost_y_preds_2)
     print(classification_report(y_test2, xgboost_y_preds_2))
 
     #### 6.b.ii. XGBoost with Feature Importance but without Balance
+    print("========================XGBoost with Feature Importance and without Balance========================")
+    print("Entrenamiento")
     xgb_model_3 = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
     xgb_model_3.fit(x_train2, y_train2)
-
+    print("Prediccion")
     xgboost_y_preds_3 = xgb_model_3.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, xgboost_y_preds_3)
     print(classification_report(y_test2, xgboost_y_preds_3))
 
-
     #### 6.b.iii. Logistic Regression with Feature Importante and with Balance
+    print("========================LogisticRegression with Feature Importance and with Balance========================")
+    print("Entrenamiento")
     reg_model_2 = LogisticRegression(class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
     reg_model_2.fit(x_train2, y_train2)
-
+    print("Prediccion")
     reg_y_preds_2 = reg_model_2.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, reg_y_preds_2)
     print(classification_report(y_test2, reg_y_preds_2))
 
     #### 6.b.iv. Logistic Regression with Feature Importante but without Balance
+    print("========================LogisticRegression with Feature Importance and without Balance========================")
+    print("Entrenamiento")
     reg_model_3 = LogisticRegression()
     reg_model_3.fit(x_train2, y_train2)
-
+    print("Prediccion")
     reg_y_preds_3 = reg_model_3.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, reg_y_preds_3)
     print(classification_report(y_test2, reg_y_preds_3))
+
+    #### 6.b.v. Random Forest with Feature Importante and with Balance
+    print("========================RandomForestClassifier with Feature Importance and with Balance========================")
+    print("Entrenamiento")
+    rf_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
+    rf_model.fit(x_train2, y_train2)
+    print("Prediccion")
+    reg_y_preds_4 = rf_model.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, reg_y_preds_4)
+    print(classification_report(y_test2, reg_y_preds_4))
+
+    #### 6.b.vi. Random Forest with Feature Importante but without Balance
+    print("========================RandomForestClassifier with Feature Importance and without Balance========================")
+    print("Entrenamiento")
+    rf_model_2 = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_model_2.fit(x_train2, y_train2)
+    print("Prediccion")
+    reg_y_preds_5 = reg_model_2.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, reg_y_preds_5)
+    print(classification_report(y_test2, reg_y_preds_5))
+
+    #### 6.b.ii. SVM with Feature Importance but without Balance
+    print("========================SVM with Feature Importance and without Balance========================")
+    print("Entrenamiento")
+    svm_model_2 = SVC(kernel='linear')
+    svm_model_2.fit(x_train2, y_train2)
+    print("Prediccion")
+    svm_reg_y_preds_2 = svm_model_2.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, svm_reg_y_preds_2)
+    print(classification_report(y_test2, svm_reg_y_preds_2))
+
+    
+    #### 6.b.ii. SVM with Feature Importance but with Balance
+    print("========================SVM with Feature Importance and with Balance========================")
+    print("Entrenamiento")
+    svm_model_1 = SVC(kernel='linear', class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
+    svm_model_1.fit(x_train2, y_train2)
+    print("Prediccion")
+    svm_reg_y_preds_1 = svm_model_1.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, svm_reg_y_preds_1)
+    print(classification_report(y_test2, svm_reg_y_preds_1))
 
     ## 7. Data Science Conclusions
     # AÑADIR MIS CONCLUSIONES EN CHALLENGE.MD
