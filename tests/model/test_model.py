@@ -36,6 +36,7 @@ class TestModel(unittest.TestCase):
         github_workspace = os.environ['GITHUB_WORKSPACE']
         data_file_path = os.path.join(github_workspace, 'data', 'data.csv')
         self.data = pd.read_csv(filepath_or_buffer=data_file_path)
+        self.data = self.model.generation_feature(self.data)
 
     def test_model_preprocess_for_training(self):
         features, target = self.model.preprocess(data=self.data, target_column="delay")
@@ -91,9 +92,9 @@ class TestModel(unittest.TestCase):
         assert report["1"]["recall"] > 0.60
         assert report["1"]["f1-score"] > 0.30 """
 
-    def test_model_predict(self):
-        features = self.data  # Obtén la lista de vuelos de tus features
-        
+    def test_model_predict(self):  
+        features = self.model.preprocess(data=self.data) # Obtén la lista de vuelos de tus features
+
         # Crear un target falso con la misma longitud que las features
         fake_target = [0] * len(features)
         

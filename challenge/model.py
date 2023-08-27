@@ -9,6 +9,7 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from xgboost import plot_importance
 from sklearn.linear_model import LogisticRegression
@@ -21,6 +22,9 @@ class DelayModel:
     def __init__(self, model):
         self._model = model  # Model should be saved in this attribute.
 
+    def generation_feature(self, data: pd.DataFrame) -> pd.DataFrame:
+        return feature_generation(data)
+
     def preprocess(self, data: pd.DataFrame, target_column: str = None) -> pd.DataFrame:
         """
         Prepare raw data for prediction.
@@ -32,8 +36,6 @@ class DelayModel:
             pd.DataFrame: preprocessed data.
         """ 
         # Your preprocessing logic here
-        data = feature_generation(data)
-
         if target_column is not None:
             features, target = preprocess_encode(data)
             return features, target
@@ -314,21 +316,21 @@ def preprocess_encode(data):
     # Verificar si 'delay' está en las columnas
     if 'delay' in data.columns:
         # Aleatorizar las filas de las columnas seleccionadas
-        shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state=111)
+        #shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state=111)
         
         # Codificación de columnas con one-hot encoding
         features = pd.concat([
-            pd.get_dummies(shuffled_data['OPERA'], prefix='OPERA'),
-            pd.get_dummies(shuffled_data['TIPOVUELO'], prefix='TIPOVUELO'), 
-            pd.get_dummies(shuffled_data['MES'], prefix='MES')], 
+            pd.get_dummies(data['OPERA'], prefix='OPERA'),
+            pd.get_dummies(data['TIPOVUELO'], prefix='TIPOVUELO'), 
+            pd.get_dummies(data['MES'], prefix='MES')], 
             axis=1
         )
         
-        target = shuffled_data['delay']
+        target = data['delay']
         return features, target
     else:
         # Aleatorizar las filas de las columnas seleccionadas
-        shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM']], random_state=111)
+        #shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM']], random_state=111)
 
         # Codificación de columnas con one-hot encoding
         features = pd.concat([
@@ -344,12 +346,16 @@ def preprocess_importance_balance(xgb_model, y_train):
     ### Feature Importance
     plt.figure(figsize = (10,5))
     plot_importance(xgb_model)
-    
+
     ### Data Balance
     n_y0 = len(y_train[y_train == 0])
     n_y1 = len(y_train[y_train == 1])
     scale = n_y0/n_y1
     return scale, n_y0, n_y1
+
+def normalize_features(data):
+    scaler = StandardScaler()
+    return scaler.fit_transform(data)
 
 if __name__ == "__main__":
     # Cargar datos
@@ -358,14 +364,16 @@ if __name__ == "__main__":
 
     ## 1. Data Analysis: Primer vistazo
     ### ¿Cómo se distribuyen los datos?
-    data_analysis(data)
+    
+    #data_analysis(data)
 
     ## 2. Features Generation
     data = feature_generation(data)
 
     ## 3. Data Analysis: Segundo vistazo
     ### ¿Cómo es la tasa de retraso entre columnas?
-    rate_delay(data)
+    
+    #rate_delay(data)
 
     ## 4. Training
     ### 4.a. Data Split (Training and Validation)
@@ -409,6 +417,10 @@ if __name__ == "__main__":
     ## 5. Data Analysis: Tercer vistazo
     scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
 
+    """ print("Aplicar normalización.")
+    features = normalize_features(features) """
+    print(features)
+
     top_10_features = [
         "OPERA_Latin American Wings", 
         "MES_7",
@@ -428,7 +440,7 @@ if __name__ == "__main__":
 
     ### 6.b. Model Selection
     #### 6.b.i. XGBoost with Feature Importance and with Balance
-    print("========================XGBoost with Feature Importance and with Balance========================")
+    print("========================XGBoost with Feature Importance, Normalize and with Balance========================")
     print("Entrenamiento")
     xgb_model_2 = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
     xgb_model_2.fit(x_train2, y_train2)
@@ -439,7 +451,7 @@ if __name__ == "__main__":
     print(classification_report(y_test2, xgboost_y_preds_2))
 
     #### 6.b.ii. XGBoost with Feature Importance but without Balance
-    print("========================XGBoost with Feature Importance and without Balance========================")
+    print("========================XGBoost with Feature Importance, Normalize and without Balance========================")
     print("Entrenamiento")
     xgb_model_3 = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
     xgb_model_3.fit(x_train2, y_train2)
@@ -451,7 +463,7 @@ if __name__ == "__main__":
 
 
     #### 6.b.iii. Logistic Regression with Feature Importante and with Balance
-    print("========================LogisticRegression with Feature Importance and with Balance========================")
+    print("========================LogisticRegression with Feature Importance, Normalize and with Balance========================")
     print("Entrenamiento")
     reg_model_2 = LogisticRegression(class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
     reg_model_2.fit(x_train2, y_train2)
@@ -462,7 +474,7 @@ if __name__ == "__main__":
     print(classification_report(y_test2, reg_y_preds_2))
 
     #### 6.b.iv. Logistic Regression with Feature Importante but without Balance
-    print("========================LogisticRegression with Feature Importance and without Balance========================")
+    print("========================LogisticRegression with Feature Importance, Normalize and without Balance========================")
     print("Entrenamiento")
     reg_model_3 = LogisticRegression()
     reg_model_3.fit(x_train2, y_train2)
