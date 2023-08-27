@@ -32,17 +32,8 @@ class DelayModel:
             pd.DataFrame: preprocessed data.
         """
         # Your preprocessing logic here
-        data['period_day'] = data['Fecha-I'].apply(get_period_day)
-        data['high_season'] = data['Fecha-I'].apply(is_high_season)
-        data['min_diff'] = data.apply(get_min_diff, axis=1)
-
-        features = pd.concat([
-            pd.get_dummies(data['OPERA'], prefix='OPERA'),
-            pd.get_dummies(data['TIPOVUELO'], prefix='TIPOVUELO'),
-            pd.get_dummies(data['MES'], prefix='MES')], 
-            axis=1
-        )
-        return features
+        features, target = preprocess_encode(data)
+        return features, target
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
         """
@@ -56,7 +47,8 @@ class DelayModel:
             None
         """
         # Your fitting logic here
-        self._model.fit(features, target)
+        x_train, x_test, y_train, y_test = train_test_split(features, target, test_size = 0.33, random_state = 42)
+        self._model.fit(x_train, y_train)
 
     def predict(self, features: pd.DataFrame) -> List[int]:
         """
@@ -139,15 +131,7 @@ def get_rate_from_column(data, column):
             
     return pd.DataFrame.from_dict(data = rates, orient = 'index', columns = ['Tasa (%)'])
     
-
-if __name__ == "__main__":
-    # Cargar datos
-    data = pd.read_csv('../data/data.csv')
-    data.info()
-
-    ## 1. Data Analysis: Primer vistazo
-    ### ¿Cómo se distribuyen los datos?
-
+def data_analysis(data):
     flights_by_airline = data['OPERA'].value_counts()
     plt.figure(figsize = (10, 2))
     sns.set(style="darkgrid")
@@ -226,26 +210,20 @@ if __name__ == "__main__":
 
     plt.show()
 
-    ## 2. Features Generation
+def feature_generation(data):
     ### 2.a. Period of Day
-        
     data['period_day'] = data['Fecha-I'].apply(get_period_day)
-
     ### 2.b. High Season
     data['high_season'] = data['Fecha-I'].apply(is_high_season)
-
     ### 2.c. Difference in Minutes
     data['min_diff'] = data.apply(get_min_diff, axis = 1)
-
     ### 2.d. Delay
     threshold_in_minutes = 15
     data['delay'] = np.where(data['min_diff'] > threshold_in_minutes, 1, 0)
-    data.columns
+     
+    return data
 
-    ## 3. Data Analysis: Segundo vistazo
-    ### ¿Cómo es la tasa de retraso entre columnas?
-
-
+def rate_delay(data):
     destination_rate = get_rate_from_column(data, 'SIGLADES')
     destination_rate_values = data['SIGLADES'].value_counts().index
     plt.figure(figsize = (20,5))
@@ -326,45 +304,41 @@ if __name__ == "__main__":
     plt.ylabel('Delay Rate [%]', fontsize=12)
     plt.xlabel('Period', fontsize=12)
     plt.ylim(3,7)
-    plt.show()
+    plt.show()  
 
-    ## 4. Training
-    ### 4.a. Data Split (Training and Validation)
-    training_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state = 111)
+def preprocess_encode(data):
+    # Verificar si 'delay' está en las columnas
+    if 'delay' in data.columns:
+        # Aleatorizar las filas de las columnas seleccionadas
+        shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM', 'delay']], random_state=111)
+        
+        # Codificación de columnas con one-hot encoding
+        features = pd.concat([
+            pd.get_dummies(shuffled_data['OPERA'], prefix='OPERA'),
+            pd.get_dummies(shuffled_data['TIPOVUELO'], prefix='TIPOVUELO'), 
+            pd.get_dummies(shuffled_data['MES'], prefix='MES')], 
+            axis=1
+        )
+        
+        target = shuffled_data['delay']
+    else:
+        # Aleatorizar las filas de las columnas seleccionadas
+        shuffled_data = shuffle(data[['OPERA', 'MES', 'TIPOVUELO', 'SIGLADES', 'DIANOM']], random_state=111)
 
-    features = pd.concat([
-        pd.get_dummies(data['OPERA'], prefix = 'OPERA'),
-        pd.get_dummies(data['TIPOVUELO'], prefix = 'TIPOVUELO'), 
-        pd.get_dummies(data['MES'], prefix = 'MES')], 
-        axis = 1
-    )
-    target = data['delay']
+        # Codificación de columnas con one-hot encoding
+        features = pd.concat([
+            pd.get_dummies(data['OPERA'], prefix='OPERA'),
+            pd.get_dummies(data['TIPOVUELO'], prefix='TIPOVUELO'), 
+            pd.get_dummies(data['MES'], prefix='MES')], 
+            axis=1
+        )
+        
+        target = None
 
-    x_train, x_test, y_train, y_test = train_test_split(features, target, test_size = 0.33, random_state = 42)
-    print(f"train shape: {x_train.shape} | test shape: {x_test.shape}")
-    y_train.value_counts('%')*100
-    y_test.value_counts('%')*100
+    return features, target
 
-    ### 4.b. Model Selection
-    #### 4.b.i. XGBoost
 
-    xgb_model = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
-    xgb_model.fit(x_train, y_train)
-
-    xgboost_y_preds = xgb_model.predict(x_test)
-    xgboost_y_preds = [1 if y_pred > 0.5 else 0 for y_pred in xgboost_y_preds]
-
-    confusion_matrix(y_test, xgboost_y_preds)
-    print(classification_report(y_test, xgboost_y_preds))
-
-    #### 4.b.ii. Logistic Regression
-    reg_model = LogisticRegression()
-    reg_model.fit(x_train, y_train)
-    reg_y_preds = reg_model.predict(x_test)
-    confusion_matrix(y_test, reg_y_preds)
-    print(classification_report(y_test, reg_y_preds))
-
-    ## 5. Data Analysis: Tercer vistazo
+def preprocess_importance_balance(xgb_model, y_train):
     ### Feature Importance
     plt.figure(figsize = (10,5))
     plot_importance(xgb_model)
@@ -385,7 +359,63 @@ if __name__ == "__main__":
     n_y0 = len(y_train[y_train == 0])
     n_y1 = len(y_train[y_train == 1])
     scale = n_y0/n_y1
-    print(scale)
+    return top_10_features, scale, n_y0, n_y1
+
+if __name__ == "__main__":
+    # Cargar datos
+    data = pd.read_csv('../data/data.csv')
+    data.info()
+
+    ## 1. Data Analysis: Primer vistazo
+    ### ¿Cómo se distribuyen los datos?
+    data_analysis(data)
+
+    ## 2. Features Generation
+    data = feature_generation(data)
+
+    ## 3. Data Analysis: Segundo vistazo
+    ### ¿Cómo es la tasa de retraso entre columnas?
+    rate_delay(data)
+
+    ## 4. Training
+    ### 4.a. Data Split (Training and Validation)
+
+    # Preprocesamiento
+    features, target = preprocess_encode(data)
+
+    x_train, x_test, y_train, y_test = train_test_split(features, target, test_size = 0.33, random_state = 42)
+
+    print(f"train shape: {x_train.shape} | test shape: {x_test.shape}")
+    print(y_train.value_counts('%')*100)
+    print(y_test.value_counts('%')*100)
+
+    ### 4.b. Model Selection
+    #### 4.b.i. XGBoost
+
+    print("========================XGBoost========================")
+    print("Entrenamiento")
+    xgb_model = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
+    xgb_model.fit(x_train, y_train)
+    print("Prediccion")
+    xgboost_y_preds = xgb_model.predict(x_test)
+    xgboost_y_preds = [1 if y_pred > 0.5 else 0 for y_pred in xgboost_y_preds]
+    print("Reporte")
+    confusion_matrix(y_test, xgboost_y_preds)
+    print(classification_report(y_test, xgboost_y_preds))
+
+    #### 4.b.ii. Logistic Regression
+    print("========================LogisticRegression========================")
+    print("Entrenamiento")
+    reg_model = LogisticRegression()
+    reg_model.fit(x_train, y_train)
+    print("Prediccion")
+    reg_y_preds = reg_model.predict(x_test)
+    print("Reporte")
+    confusion_matrix(y_test, reg_y_preds)
+    print(classification_report(y_test, reg_y_preds))
+
+    ## 5. Data Analysis: Tercer vistazo
+    top_10_features, scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
 
     ## 6. Training with Improvement
     ### 6.a. Data Split
@@ -393,35 +423,47 @@ if __name__ == "__main__":
 
     ### 6.b. Model Selection
     #### 6.b.i. XGBoost with Feature Importance and with Balance
+    print("========================XGBoost with Feature Importance and with Balance========================")
+    print("Entrenamiento")
     xgb_model_2 = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
     xgb_model_2.fit(x_train2, y_train2)
-
+    print("Prediccion")
     xgboost_y_preds_2 = xgb_model_2.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, xgboost_y_preds_2)
     print(classification_report(y_test2, xgboost_y_preds_2))
 
     #### 6.b.ii. XGBoost with Feature Importance but without Balance
+    print("========================XGBoost with Feature Importance and without Balance========================")
+    print("Entrenamiento")
     xgb_model_3 = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
     xgb_model_3.fit(x_train2, y_train2)
-
+    print("Prediccion")
     xgboost_y_preds_3 = xgb_model_3.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, xgboost_y_preds_3)
     print(classification_report(y_test2, xgboost_y_preds_3))
 
 
     #### 6.b.iii. Logistic Regression with Feature Importante and with Balance
+    print("========================LogisticRegression with Feature Importance and with Balance========================")
+    print("Entrenamiento")
     reg_model_2 = LogisticRegression(class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
     reg_model_2.fit(x_train2, y_train2)
-
+    print("Prediccion")
     reg_y_preds_2 = reg_model_2.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, reg_y_preds_2)
     print(classification_report(y_test2, reg_y_preds_2))
 
     #### 6.b.iv. Logistic Regression with Feature Importante but without Balance
+    print("========================LogisticRegression with Feature Importance and without Balance========================")
+    print("Entrenamiento")
     reg_model_3 = LogisticRegression()
     reg_model_3.fit(x_train2, y_train2)
-
+    print("Prediccion")
     reg_y_preds_3 = reg_model_3.predict(x_test2)
+    print("Reporte")
     confusion_matrix(y_test2, reg_y_preds_3)
     print(classification_report(y_test2, reg_y_preds_3))
 
