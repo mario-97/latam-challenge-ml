@@ -50,8 +50,7 @@ class TestModel(unittest.TestCase):
         self
     ):
         features, target = self.model.preprocess(
-            data=self.data,
-            target_column="delay"
+            data=self.data
         )
 
         features = features[self.FEATURES_COLS]
@@ -80,8 +79,7 @@ class TestModel(unittest.TestCase):
         self
     ):
         features, target = self.model.preprocess(
-            data=self.data,
-            target_column="delay"
+            data=self.data
         )
 
         _, features_validation, _, target_validation = train_test_split(features, target, test_size = 0.33, random_state = 42)
