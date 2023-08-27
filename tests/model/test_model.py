@@ -30,7 +30,7 @@ class TestModel(unittest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.xgb_model = XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight=scale)
+        self.xgb_model = XGBClassifier(random_state=1, learning_rate=0.01)
         self.model = DelayModel(model=self.xgb_model)  # Inicializar DelayModel con xgb_model
         
 
