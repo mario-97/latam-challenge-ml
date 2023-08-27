@@ -14,6 +14,7 @@ import xgboost as xgb
 from xgboost import plot_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 
 warnings.filterwarnings('ignore')
 from typing import Tuple, Union, List
@@ -67,9 +68,11 @@ class DelayModel:
 
         Returns:
             List[int]: predicted targets.
-        """
+        """ 
         # Your prediction logic here
-        return self._model.predict(features) 
+        prediction_result = self._model.predict(features)
+        predicted_targets = prediction_result.tolist()  # Convert the array to a Python list
+        return predicted_targets
 
     
 def get_period_day(date):
@@ -399,6 +402,7 @@ if __name__ == "__main__":
     xgb_model.fit(x_train, y_train)
     print("Prediccion")
     xgboost_y_preds = xgb_model.predict(x_test)
+    print(xgboost_y_preds)
     xgboost_y_preds = [1 if y_pred > 0.5 else 0 for y_pred in xgboost_y_preds]
     print("Reporte")
     confusion_matrix(y_test, xgboost_y_preds)
@@ -425,6 +429,17 @@ if __name__ == "__main__":
     print("Reporte")
     confusion_matrix(y_test, reg_y_preds_0)
     print(classification_report(y_test, reg_y_preds_0))
+
+    #### 4.d.ii. Support Vector Machine
+    print("========================SVM========================")
+    print("Entrenamiento")
+    svm_model_0 = SVC(kernel='linear')
+    svm_model_0.fit(x_train, y_train)
+    print("Prediccion")
+    svm_reg_y_preds = svm_model_0.predict(x_test)
+    print("Reporte")
+    confusion_matrix(y_test, svm_reg_y_preds)
+    print(classification_report(y_test, svm_reg_y_preds))
 
     ## 5. Data Analysis: Tercer vistazo
     scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
@@ -469,7 +484,6 @@ if __name__ == "__main__":
     confusion_matrix(y_test2, xgboost_y_preds_3)
     print(classification_report(y_test2, xgboost_y_preds_3))
 
-
     #### 6.b.iii. Logistic Regression with Feature Importante and with Balance
     print("========================LogisticRegression with Feature Importance and with Balance========================")
     print("Entrenamiento")
@@ -513,6 +527,29 @@ if __name__ == "__main__":
     print("Reporte")
     confusion_matrix(y_test2, reg_y_preds_5)
     print(classification_report(y_test2, reg_y_preds_5))
+
+    #### 6.b.ii. SVM with Feature Importance but without Balance
+    print("========================SVM with Feature Importance and without Balance========================")
+    print("Entrenamiento")
+    svm_model_2 = SVC(kernel='linear')
+    svm_model_2.fit(x_train2, y_train2)
+    print("Prediccion")
+    svm_reg_y_preds_2 = svm_model_2.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, svm_reg_y_preds_2)
+    print(classification_report(y_test2, svm_reg_y_preds_2))
+
+    
+    #### 6.b.ii. SVM with Feature Importance but with Balance
+    print("========================SVM with Feature Importance and with Balance========================")
+    print("Entrenamiento")
+    svm_model_1 = SVC(kernel='linear', class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
+    svm_model_1.fit(x_train2, y_train2)
+    print("Prediccion")
+    svm_reg_y_preds_1 = svm_model_1.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, svm_reg_y_preds_1)
+    print(classification_report(y_test2, svm_reg_y_preds_1))
 
     ## 7. Data Science Conclusions
     # AÑADIR MIS CONCLUSIONES EN CHALLENGE.MD
