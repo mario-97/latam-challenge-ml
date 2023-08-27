@@ -14,10 +14,10 @@ import xgboost as xgb
 from xgboost import plot_importance
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
+from IPython.display import display
+from sklearn.preprocessing import LabelEncoder
 
-warnings.filterwarnings('ignore')
-from typing import Tuple, Union, List
+warnings.filterwarnings('ignore') 
 
 class DelayModel:
 
@@ -40,9 +40,11 @@ class DelayModel:
         # Your preprocessing logic here
         if target_column is not None:
             features, target = preprocess_encode(data)
+            features = preprocess_normalize_labelencoder(features)
             return features, target
         else:
             features, target = preprocess_encode(data)
+            features = preprocess_normalize_labelencoder(features)
             return features
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
@@ -359,7 +361,32 @@ def preprocess_importance_balance(xgb_model, y_train):
 
 def normalize_features(data):
     scaler = StandardScaler()
-    return scaler.fit_transform(data)
+    normalized_data = scaler.fit_transform(data)
+    
+    if isinstance(data, pd.DataFrame):
+        normalized_df = pd.DataFrame(normalized_data, columns=data.columns, index=data.index)
+        return normalized_df
+    else:
+        return normalized_data
+
+def label_encoder(data, columnas_categoricas=None):
+    # Crear un objeto LabelEncoder
+    label_encoder = LabelEncoder()
+
+    # Si no se proporcionan columnas categóricas específicas, codificar todas las columnas
+    if columnas_categoricas is None:
+        columnas_categoricas = data.select_dtypes(include=['object']).columns
+
+    # Aplicar LabelEncoder a las columnas categóricas
+    for columna in columnas_categoricas:
+        data[columna] = label_encoder.fit_transform(data[columna])
+
+    return data
+
+def preprocess_normalize_labelencoder(data):
+    data = label_encoder(data, columnas_categoricas=None)
+    data = normalize_features(data)
+    return data
 
 if __name__ == "__main__":
     # Cargar datos
@@ -384,6 +411,10 @@ if __name__ == "__main__":
 
     # Preprocesamiento
     features, target = preprocess_encode(data)
+    print("Preprocess Encode")
+    print(features)
+    features = preprocess_normalize_labelencoder(features)
+    print("Preprocess Label Encoder + Normalize")
     print(features)
     print(target)
 
@@ -429,17 +460,6 @@ if __name__ == "__main__":
     print("Reporte")
     confusion_matrix(y_test, reg_y_preds_0)
     print(classification_report(y_test, reg_y_preds_0))
-
-    #### 4.d.ii. Support Vector Machine
-    print("========================SVM========================")
-    print("Entrenamiento")
-    svm_model_0 = SVC(kernel='linear')
-    svm_model_0.fit(x_train, y_train)
-    print("Prediccion")
-    svm_reg_y_preds = svm_model_0.predict(x_test)
-    print("Reporte")
-    confusion_matrix(y_test, svm_reg_y_preds)
-    print(classification_report(y_test, svm_reg_y_preds))
 
     ## 5. Data Analysis: Tercer vistazo
     scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
@@ -528,28 +548,54 @@ if __name__ == "__main__":
     confusion_matrix(y_test2, reg_y_preds_5)
     print(classification_report(y_test2, reg_y_preds_5))
 
-    #### 6.b.ii. SVM with Feature Importance but without Balance
-    print("========================SVM with Feature Importance and without Balance========================")
-    print("Entrenamiento")
-    svm_model_2 = SVC(kernel='linear')
-    svm_model_2.fit(x_train2, y_train2)
-    print("Prediccion")
-    svm_reg_y_preds_2 = svm_model_2.predict(x_test2)
-    print("Reporte")
-    confusion_matrix(y_test2, svm_reg_y_preds_2)
-    print(classification_report(y_test2, svm_reg_y_preds_2))
+    # Modelos y sus configuraciones
+    models = [
+        ("XGBoost", xgb_model, x_test, y_test),
+        ("LR", reg_model, x_test, y_test),
+        ("RF", rf_model_0, x_test, y_test),
+        ("XGBoost with Feature Import. and with Balance", xgb_model_2, x_test2, y_test2),
+        ("XGBoost with Feature Import. and without Balance", xgb_model_3, x_test2, y_test2),
+        ("LR with Feature Import. and with Balance", reg_model_2, x_test2, y_test2),
+        ("LR with Feature Importance and without Balance", reg_model_3, x_test2, y_test2),
+        ("RF with Feature Import. and with Balance", rf_model, x_test2, y_test2),
+        ("RF with Feature Import. and without Balance", rf_model_2, x_test2, y_test2)
+    ]
 
-    
-    #### 6.b.ii. SVM with Feature Importance but with Balance
-    print("========================SVM with Feature Importance and with Balance========================")
-    print("Entrenamiento")
-    svm_model_1 = SVC(kernel='linear', class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
-    svm_model_1.fit(x_train2, y_train2)
-    print("Prediccion")
-    svm_reg_y_preds_1 = svm_model_1.predict(x_test2)
-    print("Reporte")
-    confusion_matrix(y_test2, svm_reg_y_preds_1)
-    print(classification_report(y_test2, svm_reg_y_preds_1))
+    # Gráficos ROC y AUC
+    plt.figure(figsize=(10, 8))
+    for name, model, x_test_, y_test_ in models:
+        y_preds = model.predict_proba(x_test_)[:, 1]
+        fpr, tpr, _ = roc_curve(y_test_, y_preds)
+        auc = roc_auc_score(y_test_, y_preds)
+        plt.plot(fpr, tpr, label=f'{name} (AUC = {auc:.2f})')
+
+    plt.plot([0, 1], [0, 1], 'k--', label='Random')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC Curves')
+    plt.legend()
+
+    # Tabla comparativa de métricas
+    results = []
+    for name, model, x_test_, y_test_ in models:
+        y_preds = model.predict(x_test_)
+        roc_auc = roc_auc_score(y_test_, y_preds)
+        fpr, tpr, _ = roc_curve(y_test_, y_preds)
+        mcc = matthews_corrcoef(y_test_, y_preds)
+        classification_rep = classification_report(y_test_, y_preds, output_dict=True)
+        accuracy = classification_rep["accuracy"]
+        precision = classification_rep["1"]["precision"]
+        recall = classification_rep["1"]["recall"]
+        f1 = classification_rep["1"]["f1-score"]
+        
+        results.append((name, roc_auc, mcc, accuracy, precision, recall, f1))
+
+    results_df = pd.DataFrame(results, columns=["Model", "ROC AUC", "MCC", "Accuracy", "Precision", "Recall", "F1-Score"])
+    print("\nTable of Metrics:")
+    plt.tight_layout()
+    plt.show()
+
+
 
     ## 7. Data Science Conclusions
     # AÑADIR MIS CONCLUSIONES EN CHALLENGE.MD

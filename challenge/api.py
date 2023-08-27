@@ -2,6 +2,7 @@ import fastapi
 from fastapi import HTTPException
 
 app = fastapi.FastAPI()
+
 @app.get("/health", status_code=200)
 async def get_health() -> dict:
     return {
