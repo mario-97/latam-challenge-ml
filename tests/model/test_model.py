@@ -61,6 +61,13 @@ class TestModel(unittest.TestCase):
         features = features[self.FEATURES_COLS]
         _, features_validation, _, target_validation = train_test_split(features, target, test_size = 0.33, random_state = 42)
 
+        ### Data Balance
+        n_y0 = len(target[target == 0])
+        n_y1 = len(target[target == 1])
+        scale = n_y0/n_y1
+        
+        self.model._model.set_params(scale_pos_weight=scale)
+
         self.model.fit(
             features=features,
             target=target
@@ -72,10 +79,12 @@ class TestModel(unittest.TestCase):
 
         report = classification_report(target_validation, predicted_target, output_dict=True) 
         
-        self.assertLess(report["0"]["recall"], 0.60)
+        self.assertLess(report["0"]["recall"], 0.60) # Para verificar si esta correctamente identificando las clases 0
         self.assertLess(report["0"]["f1-score"], 0.70)
-        self.assertGreater(report["1"]["recall"], 0.60)
+        self.assertGreater(report["1"]["recall"], 0.60) # Para verificar si esta correctamente identificando las clases 1
         self.assertGreater(report["1"]["f1-score"], 0.30)
+
+        # f1-score = (2×Precision×Recall)/(Precision+Recall)
         """ 
         assert report["0"]["recall"] < 0.60
         assert report["0"]["f1-score"] < 0.70
@@ -83,10 +92,10 @@ class TestModel(unittest.TestCase):
         assert report["1"]["f1-score"] > 0.30 """
 
     def test_model_predict(self):
-        features = self.model.preprocess(data=self.data)
+        features, target = self.model.preprocess(data=self.data)
         features = features[self.FEATURES_COLS]
         
-        #self.model.fit(features=features, target=target)
+        self.model.fit(features=features, target=target)
         predicted_targets = self.model.predict(features=features)
 
         self.assertIsInstance(predicted_targets, list)

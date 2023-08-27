@@ -33,7 +33,7 @@ class DelayModel:
         """ 
         # Your preprocessing logic here
         data = feature_generation(data)
-        
+
         if target_column is not None:
             features, target = preprocess_encode(data)
             return features, target
@@ -339,32 +339,17 @@ def preprocess_encode(data):
         )
          
         return features, None
-
-
     
-
 def preprocess_importance_balance(xgb_model, y_train):
     ### Feature Importance
     plt.figure(figsize = (10,5))
     plot_importance(xgb_model)
-    top_10_features = [
-        "OPERA_Latin American Wings", 
-        "MES_7",
-        "MES_10",
-        "OPERA_Grupo LATAM",
-        "MES_12",
-        "TIPOVUELO_I",
-        "MES_4",
-        "MES_11",
-        "OPERA_Sky Airline",
-        "OPERA_Copa Air"
-    ]
-
+    
     ### Data Balance
     n_y0 = len(y_train[y_train == 0])
     n_y1 = len(y_train[y_train == 1])
     scale = n_y0/n_y1
-    return top_10_features, scale, n_y0, n_y1
+    return scale, n_y0, n_y1
 
 if __name__ == "__main__":
     # Cargar datos
@@ -422,7 +407,20 @@ if __name__ == "__main__":
     print(classification_report(y_test, reg_y_preds))
 
     ## 5. Data Analysis: Tercer vistazo
-    top_10_features, scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
+    scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
+
+    top_10_features = [
+        "OPERA_Latin American Wings", 
+        "MES_7",
+        "MES_10",
+        "OPERA_Grupo LATAM",
+        "MES_12",
+        "TIPOVUELO_I",
+        "MES_4",
+        "MES_11",
+        "OPERA_Sky Airline",
+        "OPERA_Copa Air"
+    ]
 
     ## 6. Training with Improvement
     ### 6.a. Data Split
