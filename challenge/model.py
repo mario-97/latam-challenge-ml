@@ -36,7 +36,8 @@ class DelayModel:
             features, target = preprocess_encode(data)
             return features, target
         else:
-            return data
+            features, target = preprocess_encode(data)
+            return features
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
         """
