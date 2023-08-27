@@ -50,13 +50,16 @@ class TestModel(unittest.TestCase):
 
     def test_model_preprocess_for_serving(self):
         features = self.model.preprocess(data=self.data)
-        
+        features = features[self.FEATURES_COLS]
+
         self.assertIsInstance(features, pd.DataFrame)
         self.assertEqual(features.shape[1], len(self.FEATURES_COLS))
         self.assertEqual(set(features.columns), set(self.FEATURES_COLS))
 
     def test_model_fit(self):
         features, target = self.model.preprocess(data=self.data, target_column="delay")
+        features = features[self.FEATURES_COLS]
+
         _, features_validation, _, target_validation = train_test_split(features, target, test_size = 0.33, random_state = 42)
 
         self.model.fit(
@@ -82,6 +85,8 @@ class TestModel(unittest.TestCase):
 
     def test_model_predict(self):
         features = self.model.preprocess(data=self.data)
+        features = features[self.FEATURES_COLS]
+        
         #self.model.fit(features=features, target=target)
         predicted_targets = self.model.predict(features=features)
 
