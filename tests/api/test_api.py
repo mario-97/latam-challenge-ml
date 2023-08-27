@@ -24,8 +24,7 @@ class TestBatchPipeline(unittest.TestCase):
         self.assertEqual(response.json(), {"predict": [0]}) """
 
         with patch("xgboost.XGBClassifier") as mock_model:
-            instance = mock_model.return_value
-            instance.fit.return_value = None 
+            instance = mock_model.return_value 
             instance.predict.return_value = np.array([0])
 
             response = self.client.post("/predict", json=data)

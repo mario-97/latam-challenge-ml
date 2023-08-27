@@ -50,7 +50,7 @@ class TestModel(unittest.TestCase):
 
     def test_model_preprocess_for_serving(self):
         features = self.model.preprocess(data=self.data)
-
+        
         self.assertIsInstance(features, pd.DataFrame)
         self.assertEqual(features.shape[1], len(self.FEATURES_COLS))
         self.assertEqual(set(features.columns), set(self.FEATURES_COLS))
