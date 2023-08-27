@@ -24,7 +24,9 @@ class TestBatchPipeline(unittest.TestCase):
         self.assertEqual(response.json(), {"predict": [0]}) """
 
         with patch("xgboost.XGBClassifier") as mock_model:
-            mock_model.return_value.predict.return_value = np.array([0])
+            instance = mock_model.return_value
+            instance.fit.return_value = None 
+            instance.predict.return_value = np.array([0])
 
             response = self.client.post("/predict", json=data)
 
@@ -43,7 +45,9 @@ class TestBatchPipeline(unittest.TestCase):
             ]
         }
         with patch("xgboost.XGBClassifier") as mock_model:
-            mock_model.return_value.predict.return_value = np.array([0])
+            instance = mock_model.return_value
+            instance.fit.return_value = None 
+            instance.predict.return_value = np.array([0])
 
             response = self.client.post("/predict", json=data)
 
@@ -61,7 +65,9 @@ class TestBatchPipeline(unittest.TestCase):
             ]
         }
         with patch("xgboost.XGBClassifier") as mock_model:
-            mock_model.return_value.predict.return_value = np.array([0])
+            instance = mock_model.return_value
+            instance.fit.return_value = None 
+            instance.predict.return_value = np.array([0])
 
             response = self.client.post("/predict", json=data)
 
@@ -79,7 +85,9 @@ class TestBatchPipeline(unittest.TestCase):
             ]
         }
         with patch("xgboost.XGBClassifier") as mock_model:
-            mock_model.return_value.predict.return_value = np.array([0])
+            instance = mock_model.return_value
+            instance.fit.return_value = None 
+            instance.predict.return_value = np.array([0])
 
             response = self.client.post("/predict", json=data)
 
