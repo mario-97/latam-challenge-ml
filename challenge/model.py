@@ -21,7 +21,7 @@ class DelayModel:
     def __init__(self, model):
         self._model = model  # Model should be saved in this attribute.
 
-    def preprocess(self, data: pd.DataFrame) -> pd.DataFrame:
+    def preprocess(self, data: pd.DataFrame, target_column: str = None) -> pd.DataFrame:
         """
         Prepare raw data for prediction.
 
@@ -30,10 +30,13 @@ class DelayModel:
 
         Returns:
             pd.DataFrame: preprocessed data.
-        """
+        """ 
         # Your preprocessing logic here
-        features, target = preprocess_encode(data)
-        return features, target
+        if target_column is not None:
+            features, target = preprocess_encode(data)
+            return features, target
+        else:
+            return data
 
     def fit(self, features: pd.DataFrame, target: pd.Series) -> None:
         """
@@ -381,6 +384,8 @@ if __name__ == "__main__":
 
     # Preprocesamiento
     features, target = preprocess_encode(data)
+    print(features)
+    print(target)
 
     x_train, x_test, y_train, y_test = train_test_split(features, target, test_size = 0.33, random_state = 42)
 
