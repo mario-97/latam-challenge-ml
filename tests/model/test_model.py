@@ -68,6 +68,11 @@ class TestModel(unittest.TestCase):
         self.assertLess(report["0"]["f1-score"], 0.70)
         self.assertGreater(report["1"]["recall"], 0.60)
         self.assertGreater(report["1"]["f1-score"], 0.30)
+        """ 
+        assert report["0"]["recall"] < 0.60
+        assert report["0"]["f1-score"] < 0.70
+        assert report["1"]["recall"] > 0.60
+        assert report["1"]["f1-score"] > 0.30 """
 
     def test_model_predict(self):
         features, target = self.model.preprocess(data=self.data)
