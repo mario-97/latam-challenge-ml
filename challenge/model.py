@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 from xgboost import plot_importance
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 
 warnings.filterwarnings('ignore')
 from typing import Tuple, Union, List
@@ -414,12 +415,19 @@ if __name__ == "__main__":
     confusion_matrix(y_test, reg_y_preds)
     print(classification_report(y_test, reg_y_preds))
 
+    #### 4.c.ii. Random Forest
+    print("========================RandomForestClassifier========================")
+    print("Entrenamiento")
+    rf_model_0 = RandomForestClassifier()
+    rf_model_0.fit(x_train, y_train)
+    print("Prediccion")
+    reg_y_preds_0 = rf_model_0.predict(x_test)
+    print("Reporte")
+    confusion_matrix(y_test, reg_y_preds_0)
+    print(classification_report(y_test, reg_y_preds_0))
+
     ## 5. Data Analysis: Tercer vistazo
     scale, n_y0, n_y1 = preprocess_importance_balance(xgb_model, y_train)
-
-    """ print("Aplicar normalización.")
-    features = normalize_features(features) """
-    print(features)
 
     top_10_features = [
         "OPERA_Latin American Wings", 
@@ -440,7 +448,7 @@ if __name__ == "__main__":
 
     ### 6.b. Model Selection
     #### 6.b.i. XGBoost with Feature Importance and with Balance
-    print("========================XGBoost with Feature Importance, Normalize and with Balance========================")
+    print("========================XGBoost with Feature Importance and with Balance========================")
     print("Entrenamiento")
     xgb_model_2 = xgb.XGBClassifier(random_state=1, learning_rate=0.01, scale_pos_weight = scale)
     xgb_model_2.fit(x_train2, y_train2)
@@ -451,7 +459,7 @@ if __name__ == "__main__":
     print(classification_report(y_test2, xgboost_y_preds_2))
 
     #### 6.b.ii. XGBoost with Feature Importance but without Balance
-    print("========================XGBoost with Feature Importance, Normalize and without Balance========================")
+    print("========================XGBoost with Feature Importance and without Balance========================")
     print("Entrenamiento")
     xgb_model_3 = xgb.XGBClassifier(random_state=1, learning_rate=0.01)
     xgb_model_3.fit(x_train2, y_train2)
@@ -463,7 +471,7 @@ if __name__ == "__main__":
 
 
     #### 6.b.iii. Logistic Regression with Feature Importante and with Balance
-    print("========================LogisticRegression with Feature Importance, Normalize and with Balance========================")
+    print("========================LogisticRegression with Feature Importance and with Balance========================")
     print("Entrenamiento")
     reg_model_2 = LogisticRegression(class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
     reg_model_2.fit(x_train2, y_train2)
@@ -474,7 +482,7 @@ if __name__ == "__main__":
     print(classification_report(y_test2, reg_y_preds_2))
 
     #### 6.b.iv. Logistic Regression with Feature Importante but without Balance
-    print("========================LogisticRegression with Feature Importance, Normalize and without Balance========================")
+    print("========================LogisticRegression with Feature Importance and without Balance========================")
     print("Entrenamiento")
     reg_model_3 = LogisticRegression()
     reg_model_3.fit(x_train2, y_train2)
@@ -483,6 +491,28 @@ if __name__ == "__main__":
     print("Reporte")
     confusion_matrix(y_test2, reg_y_preds_3)
     print(classification_report(y_test2, reg_y_preds_3))
+
+    #### 6.b.v. Random Forest with Feature Importante and with Balance
+    print("========================RandomForestClassifier with Feature Importance and with Balance========================")
+    print("Entrenamiento")
+    rf_model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight={1: n_y0/len(y_train), 0: n_y1/len(y_train)})
+    rf_model.fit(x_train2, y_train2)
+    print("Prediccion")
+    reg_y_preds_4 = rf_model.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, reg_y_preds_4)
+    print(classification_report(y_test2, reg_y_preds_4))
+
+    #### 6.b.vi. Random Forest with Feature Importante but without Balance
+    print("========================RandomForestClassifier with Feature Importance and without Balance========================")
+    print("Entrenamiento")
+    rf_model_2 = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_model_2.fit(x_train2, y_train2)
+    print("Prediccion")
+    reg_y_preds_5 = reg_model_2.predict(x_test2)
+    print("Reporte")
+    confusion_matrix(y_test2, reg_y_preds_5)
+    print(classification_report(y_test2, reg_y_preds_5))
 
     ## 7. Data Science Conclusions
     # AÑADIR MIS CONCLUSIONES EN CHALLENGE.MD
