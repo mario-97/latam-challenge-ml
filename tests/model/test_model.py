@@ -31,65 +31,49 @@ class TestModel(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.xgb_model = XGBClassifier(random_state=1, learning_rate=0.01)
-        self.model = DelayModel(model=self.xgb_model)  # Inicializar DelayModel con xgb_model
-        
+        self.model = DelayModel(model=self.xgb_model)
 
-        # Obtiene la ruta del directorio de trabajo en GitHub Actions
         github_workspace = os.environ['GITHUB_WORKSPACE']
-
-        # Construye la ruta al archivo data.csv
         data_file_path = os.path.join(github_workspace, 'data', 'data.csv')
-
-        # Lee el archivo CSV
         self.data = pd.read_csv(filepath_or_buffer=data_file_path)
-
-        #self.data = pd.read_csv(filepath_or_buffer="../../data/data.csv")
-        
 
     def test_model_preprocess_for_training(self):
         features, target = self.model.preprocess(data=self.data)
-
         features = features[self.FEATURES_COLS]
-        assert isinstance(features, pd.DataFrame)
-        assert features.shape[1] == len(self.FEATURES_COLS)
-        assert set(features.columns) == set(self.FEATURES_COLS)
 
-        assert isinstance(target, pd.DataFrame)
-        assert target.shape[1] == len(self.TARGET_COL)
-        assert set(target.columns) == set(self.TARGET_COL)
+        self.assertIsInstance(features, pd.DataFrame)
+        self.assertEqual(features.shape[1], len(self.FEATURES_COLS))
+        self.assertEqual(set(features.columns), set(self.FEATURES_COLS))
 
+        self.assertIsInstance(target, pd.Series)
+        self.assertEqual(target.name, "delay")
 
     def test_model_preprocess_for_serving(self):
-        features,_ = self.model.preprocess(data=self.data)
+        features, target = self.model.preprocess(data=self.data)
 
-        assert isinstance(features, pd.DataFrame)
-        assert features.shape[1] == len(self.FEATURES_COLS)
-        assert set(features.columns) == set(self.FEATURES_COLS)
-
+        self.assertIsInstance(features, pd.DataFrame)
+        self.assertEqual(features.shape[1], len(self.FEATURES_COLS))
+        self.assertEqual(set(features.columns), set(self.FEATURES_COLS))
 
     def test_model_fit(self):
         features, target = self.model.preprocess(data=self.data)
-
-        _, features_validation, _, target_validation = train_test_split(features, target, test_size = 0.33, random_state = 42)
-
-        self.model.fit(features=features,target=target)
-
-        predicted_target = self.model._model.predict(features_validation)
-
-        report = classification_report(target_validation, predicted_target, output_dict=True)
+        x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.33, random_state=42)
         
-        assert report["0"]["recall"] < 0.60
-        assert report["0"]["f1-score"] < 0.70
-        assert report["1"]["recall"] > 0.60
-        assert report["1"]["f1-score"] > 0.30
+        self.model.fit(features=x_train, target=y_train)
+        predicted_target = self.model._model.predict(x_test)
 
+        report = classification_report(y_test, predicted_target, output_dict=True)
+        
+        self.assertLess(report["0"]["recall"], 0.60)
+        self.assertLess(report["0"]["f1-score"], 0.70)
+        self.assertGreater(report["1"]["recall"], 0.60)
+        self.assertGreater(report["1"]["f1-score"], 0.30)
 
     def test_model_predict(self):
         features, target = self.model.preprocess(data=self.data)
-
-        self.model.fit(features=features,target=target)
+        self.model.fit(features=features, target=target)
         predicted_targets = self.model.predict(features=features)
 
-        assert isinstance(predicted_targets, list)
-        assert len(predicted_targets) == features.shape[0]
-        assert all(isinstance(predicted_target, int) for predicted_target in predicted_targets)
+        self.assertIsInstance(predicted_targets, list)
+        self.assertEqual(len(predicted_targets), features.shape[0])
+        self.assertTrue(all(isinstance(predicted_target, int) for predicted_target in predicted_targets))

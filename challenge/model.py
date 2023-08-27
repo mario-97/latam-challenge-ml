@@ -47,7 +47,7 @@ class DelayModel:
             None
         """
         # Your fitting logic here 
-        return self._model.fit(features, target)
+        self._model.fit(features, target)
 
     def predict(self, features: pd.DataFrame) -> List[int]:
         """
