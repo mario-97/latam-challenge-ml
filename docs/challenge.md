@@ -14,7 +14,7 @@ Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un
 
 4.- Corrección en test_model.py: Carga de archivo data.csv, y ajuste de Entrenamiento y predicciones 
 
-# Desarrollo de preprocesamiento, aplicación de modelos, análisis y conclusiones
+# Desarrollo de Preprocesamiento, Aplicación de Modelos, Análisis y Conclusiones
 
 1. **Ordenar imports al comienzo del código**
 2. **Ordenar funciones al comienzo del código**
@@ -84,18 +84,20 @@ Se ha proporcionado un cuaderno Jupyter (exploration.ipynb) con el trabajo de un
 | RF with Feature Import. and with Balance        | **0.606256**  | **0.165823**  | 0.559312  | 0.250808  | **0.681300**  | **0.366643**  |
 | RF with Feature Import. and without Balance     | 0.503232  | 0.058420  | 0.813577  | **0.714286**  | 0.007119  | 0.014098  |
 
-- Nota 1: Es destacable la alta tasa de Accuracy y Precisión tanto para las clases positivas como negativas encontradas en los modelos XGBoost, Logistic Regression y Random Forest al no aplicar el balance ni tomar las características más importantes.
+- Según la tabla de métricas:
+    - Variabilidad en el Desempeño de Clases: Es notorio cómo el balanceo de clases impacta significativamente en las métricas de Recall y F1-Score, especialmente para la clase "1" (atrasos). Los modelos con balanceo de clases muestran un alto Recall y F1-Score para la clase "1", lo cual es crucial para nuestro objetivo de identificar vuelos atrasados de manera efectiva. Sin embargo, esto se hace a expensas de la Precisión, lo cual indica que el modelo podría estar incurriendo en más Falsos Positivos.
+    - Compromiso entre Métricas: Los modelos con balance de clases tienen un rendimiento notablemente mejor en términos de ROC AUC y MCC, que son métricas más robustas para evaluar el rendimiento general del modelo. Esto sugiere que, aunque hay un compromiso entre las diferentes métricas, los modelos con balanceo de clases podrían ser más efectivos para nuestro caso de uso específico, que requiere una alta tasa de detección de la clase minoritaria (atrasos).
 
 ## Conclusiones generales
 
 - Al observar los resultados de los 9 modelos entrenados, se puede concluir que:
     - No hay diferencias notables en los resultados entre XGBoost, LogisticRegression y Random Forest.
     - No disminuye el rendimiento del modelo reduciendo las características a las 10 más importantes.
-    - Mejora el rendimiento de los modelos al equilibrar clases, ya que aumenta la recuperación de la clase "1".
+    - Mejora el rendimiento de los modelos al equilibrar clases.
     - No disminuye le rendimiento de los modelos aplicando Normalización de características.
     - El modelo XGBoost no mejoró su rendimiento aplicando un Validación cruzada
     - Tanto "LR with Feature Import. and with Balance", como "RF with Feature Import. and with Balance", tienen una alta tasa en la curva ROC y AUC (0.6 ambos casos), esto quiere decir que estos modelos también son capaces de distinguir de buena manera clases positivas y negativas
 
 **Con esto, el modelo para que sea productivo debe ser aquel que esté entrenado con las 10 características principales y balanceo de clases, pero ¿cuál?** 
-- Finalmente el modelo para que sea productivo debe tomar las 10 caracteristicas principales, aplicar normalización y balanceo de clases. Esto lo cumple tanto el modelo XGBoost y Random Forest
+- Por lo tanto, el modelo productivo debería ser uno que incorpore las 10 características más importantes, aplique normalización y balanceo de clases. Tanto XGBoost como Random Forest cumplen con estos criterios.
 
