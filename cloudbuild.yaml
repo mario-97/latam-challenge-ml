@@ -1,0 +1,12 @@
+steps:
+- name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      gcloud config set project challenge-latam-ml
+      gcloud app deploy app.yaml --version=challenge-latam-ml
+  timeout: "1600s"  # Aumenta el tiempo límite si es necesario
+
+substitutions:
+  _VERSION: $SHORT_SHA
