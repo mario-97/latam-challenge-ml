@@ -1,12 +1,12 @@
 steps:
-- name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
-  args:
-    - "-c"
-    - |
-      gcloud config set project challenge-latam-ml
-      gcloud app deploy app.yaml --version=challenge-latam-ml
-timeout: "1600s"  # Aumenta el tiempo límite si es necesario
-
-substitutions:
-  _VERSION: $SHORT_SHA
+  # Construir la imagen de Docker
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/challenge-latam-ml/app", "."]
+  
+  # Empujar la imagen al Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/challenge-latam-ml/app"]
+  
+  # Desplegar la imagen en App Engine
+  - name: "gcr.io/cloud-builders/gcloud"
+    args: ["app", "deploy", "app.yaml"]
