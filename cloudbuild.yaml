@@ -7,4 +7,5 @@ steps:
     args: ["push", "gcr.io/challenge-latam-ml/app"]
   # Desplegar la imagen en App Engine
   - name: "gcr.io/cloud-builders/gcloud"
-    args: ["app", "deploy", "app.yaml", "--timeout=2500"]
+    args: ["app", "deploy", "app.yaml"]
+timeout: '2500s'
