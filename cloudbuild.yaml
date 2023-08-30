@@ -1,12 +1,13 @@
 steps:
-  # Construir la imagen de Docker
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "gcr.io/challenge-latam-ml/app", "."]
-  
-  # Empujar la imagen al Container Registry
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/challenge-latam-ml/app"]
-  
-  # Desplegar la imagen en App Engine
-  - name: "gcr.io/cloud-builders/gcloud"
-    args: ["app", "deploy", "app.yaml"]
+# Construir la imagen de Docker
+- name: "gcr.io/cloud-builders/docker"
+  args: ["build", "-t", "gcr.io/challenge-latam-ml/app", "."]
+
+# Empujar la imagen al Container Registry
+- name: "gcr.io/cloud-builders/docker"
+  args: ["push", "gcr.io/challenge-latam-ml/app"]
+
+# Desplegar la imagen en App Engine
+- name: "gcr.io/cloud-builders/gcloud"
+  args: ["app", "deploy", "app.yaml"]
+timeout: '1600s'
